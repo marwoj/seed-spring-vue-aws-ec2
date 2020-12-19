@@ -1,0 +1,35 @@
+---
+- name: Ensure ECR UI repo exists.
+  ecs_ecr:
+    name: "{{ ecr_image_name }}"
+    region: "{{ aws_region }}"
+    registry_id: "{{ aws_account_id }}"
+    aws_access_key: "{{ aws_access_key_id }}"
+    aws_secret_key: "{{ aws_secret_access_key }}"
+    state: present
+  when: ecr_push
+
+- name: Set the current image tag.
+  set_fact:
+    image_tag: "{{ outer_item }}"
+
+- name: Print the current tag being pushed.
+  debug: var=image_tag
+
+- name: Ensure there's not already an image locally tagged with the ecr_url.
+  docker_image:
+    name: "{{ ecr_url }}/{{ ecr_image_name }}:{{ image_tag }}"
+    force_tag: true
+    state: absent
+
+- name: Apply additional tag if there's more than one.
+  command: "docker tag {{ ecr_image_name }}:{{ ecr_image_tags.0 }} {{ ecr_url }}/{{ ecr_image_name }}:{{ image_tag }}"
+  changed_when: true
+
+- name: Push image to ECR.
+  command: "docker push {{ ecr_url }}/{{ ecr_image_name }}:{{ image_tag }}"
+  register: push_result
+  changed_when: true
+  until: push_result is success
+  retries: 10
+  delay: 2

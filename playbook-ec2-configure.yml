@@ -1,0 +1,55 @@
+---
+#ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
+#Note: inventory is defined in: /etc/ansible/hosts
+- name: Configure EC2 instance
+  hosts: "{{ seed_hosts }}"
+  connection: ssh
+  become: true
+
+  vars:
+  tasks:
+    - fail: msg="The variable 'seed_hosts' is not defined or empty"
+      when: (seed_hosts is not defined) or (seed_hosts|length == 0)
+
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools', 'unzip' ]
+
+    - name: Install aws cli
+      command: curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+    - name: Install aws cli
+      command: unzip awscliv2.zip
+
+    - name: Install aws cli
+      command: sudo /home/ubuntu/aws/install
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Adding user to group
+      user:
+        name: ubuntu
+        shell: /bin/bash
+        groups: docker
+        append: yes
+
+    - name: Restarting docker service
+      command: sudo systemctl restart docker

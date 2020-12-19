@@ -1,0 +1,3 @@
+rootProject.name = 'seed-spring-vue'
+
+include 'seed-spring'

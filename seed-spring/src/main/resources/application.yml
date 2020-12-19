@@ -1,0 +1,35 @@
+seed:
+  cors-allowed-origin: 'http://localhost:8081'
+  basicAuthUsername: 'changeme'
+  basicAuthPassword: 'changeme'
+
+management:
+  server:
+    port: 8083 # TODO mention about actuator and different port to be unlocked + mention about 8082 traefik port
+  security:
+    enabled: false
+  endpoints:
+    metrics:
+      enabled: true
+    web:
+      exposure:
+        include: "*"
+
+spring:
+  mail:
+    host: smtp.mailgun.org
+    username: 'changeme@changeme.com'
+    password: 'changeme'
+    port: 587
+    properties:
+      mail:
+        smtp:
+          ssl:
+            trust: smtp.mailgun.org
+          auth: true
+          starttls:
+            enable: true
+            required: true
+  data:
+    mongodb:
+      database: 'seed'
