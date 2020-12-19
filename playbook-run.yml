@@ -1,0 +1,207 @@
+---
+#ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-ip seed_hosts=ec2-seed db_setup=false"
+#ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-domain seed_hosts=ec2-seed db_setup=false"
+#hosts are defined in /etc/ansible/hosts
+- name: "Run seed"
+  hosts: "{{ seed_hosts }}"
+  connection: ssh
+
+  vars:
+    ecr_api_image_name: seed-spring-vue/seed-spring
+    ecr_ui_image_name: seed-spring-vue/seed-vue
+    ecr_image_name: ""
+    db_setup_required: "{{ true if db_setup=='true' else false }}"
+    revers_proxy_setup_required: "{{ true if seed_env=='env-domain' else false }}"
+    api_setup_required: true
+    ui_setup_required: true
+    ecr_url: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+    spring_application_json: >
+      {
+        'spring.mail.username': '{{seed_mail_username}}',
+        'spring.mail.password': '{{seed_mail_password}}',
+        'seed.basicAuthUsername': '{{vue_app_basicAuthUsername}}',
+        'seed.basicAuthPassword': '{{vue_app_basicAuthPassword}}',
+        'seed.cors-allowed-origin': '{{cors_allowed_origin}}'
+      }
+
+  vars_files:
+    - ~/workspace/secret/{{ seed_env }}/pb-config.yml
+
+  tasks:
+    - fail: msg="The variable 'seed_hosts' is not defined or empty"
+      when: (seed_hosts is not defined) or (seed_hosts|length == 0)
+    - fail: msg="The variable 'seed_env' is not defined or empty"
+      when: (seed_env is not defined) or (seed_env|length == 0)
+    - fail: msg="The variable 'aws_access_key_id' is not defined or empty"
+      when: (aws_access_key_id is not defined) or (aws_access_key_id|length == 0)
+    - fail: msg="The variable 'aws_secret_access_key' is not defined or empty"
+      when: (aws_secret_access_key is not defined) or (aws_secret_access_key|length == 0)
+    - fail: msg="The variable 'aws_region' is not defined or empty"
+      when: (aws_region is not defined) or (aws_region|length == 0)
+    - fail: msg="The variable 'aws_account_id' is not defined or empty"
+      when: (aws_account_id is not defined) or (aws_account_id|length == 0)
+    - fail: msg="The variable 'vue_app_api_address' is not defined or empty"
+      when: (vue_app_api_address is not defined) or (vue_app_api_address|length == 0)
+    - fail: msg="The variable 'vue_app_basicAuthUsername' is not defined or empty"
+      when: (vue_app_basicAuthUsername is not defined) or (vue_app_basicAuthUsername|length == 0)
+    - fail: msg="The variable 'vue_app_basicAuthPassword' is not defined or empty"
+      when: (vue_app_basicAuthPassword is not defined) or (vue_app_basicAuthPassword|length == 0)
+    - fail: msg="The variable 'cors_allowed_origin' is not defined or empty"
+      when: (cors_allowed_origin is not defined) or (cors_allowed_origin|length == 0)
+    - fail: msg="The variable 'traefik_host' is not defined or empty"
+      when: revers_proxy_setup_required and ((traefik_host is not defined) or (traefik_host|length == 0))
+    - fail: msg="The variable 'api_host' is not defined or empty"
+      when: revers_proxy_setup_required and ((api_host is not defined) or (api_host|length == 0))
+    - fail: msg="The variable 'ui_host' is not defined or empty"
+      when: revers_proxy_setup_required and ((ui_host is not defined) or (ui_host|length == 0))
+    - fail: msg="The variable 'issuer_email' is not defined or empty"
+      when: revers_proxy_setup_required and ((issuer_email is not defined) or (issuer_email|length == 0))
+
+    - debug:
+        msg:
+          - seed_env={{ seed_env }}
+          - VUE_APP_API_ADDRESS={{ vue_app_api_address }}
+          - VUE_APP_BASIC_AUTH_USERNAME={{ vue_app_basicAuthUsername }}
+          - VUE_APP_BASIC_AUTH_PASSWORD={{ vue_app_basicAuthPassword }}
+          - revers_proxy_setup_required={{ revers_proxy_setup_required }}
+          - seed_mail_username={{ seed_mail_username }}
+          - seed_mail_password={{ seed_mail_password }}
+          - issuer_email={{ issuer_email }}
+          - cors_allowed_origin={{ cors_allowed_origin }}
+          - ui_host={{ ui_host }}
+          - api_host={{ api_host }}
+          - traefik_host={{ traefik_host }}
+
+    - name: Log into ECR if required.
+      environment:
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      shell: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_url }}
+      tags: [ 'skip_ansible_lint' ]
+      when: api_setup_required or ui_setup_required
+
+    - name: Prune everything
+      docker_prune:
+        containers: yes
+        images: yes
+        networks: yes
+        volumes: yes
+        builder_cache: yes
+
+    - name: Create network.
+      docker_network:
+        name: seed
+
+    - name: Remove mongo docker container
+      docker_container:
+        name: "seed-mongo"
+        state: absent
+      when: db_setup_required
+
+    - name: Run database.
+      docker_container:
+        image: "mongo:4.4.2"
+        name: "seed-mongo"
+        published_ports: "27017:27017"
+        networks:
+          - name: "seed"
+        restart_policy: unless-stopped
+        state: started
+      when: db_setup_required
+
+    - name: Remove container traefik
+      docker_container:
+        name: "seed-traefik"
+        state: absent
+      when: revers_proxy_setup_required
+
+    - name: Remove container seed-spring
+      docker_container:
+        name: "seed-spring"
+        state: absent
+      when: api_setup_required
+
+    - name: Remove container seed-vue
+      docker_container:
+        name: "seed-vue"
+        state: absent
+      when: ui_setup_required
+
+    - name: Prune images after containers removed
+      shell: docker image prune -a -f
+      ignore_errors: True
+
+    - name: Run reverse proxy.
+      docker_container:
+        image: "traefik:v2.3.5"
+        name: "seed-traefik"
+        command:
+          - "--api.insecure=true"
+          - "--providers.docker=true"
+          - "--providers.docker.exposedbydefault=false"
+          - "--entrypoints.web.address=:80"
+          - "--entrypoints.websecure.address=:443"
+          - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+          - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+          # Note: For development purposes, uncomment acme-staging ca server below:
+          - "--certificatesresolvers.myresolver.acme.email={{ issuer_email }}"
+          - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+        ports:
+          - 80:80
+          - 443:443
+          - 8082:8080
+        volumes:
+          - ./letsencrypt:/letsencrypt
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+        networks:
+          - name: "seed"
+        restart_policy: unless-stopped
+        state: started
+      when: revers_proxy_setup_required
+
+    - name: Run api
+      docker_container:
+        image: "{{ ecr_url }}/seed-spring-vue/seed-spring"
+        name: "seed-spring"
+        published_ports: [ "8080:8080" ]
+        ports:
+          - 8080:8080
+          - 8083:8083
+        networks:
+          - name: "seed"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.seed-api.rule: "Host(`{{ api_host }}`)"
+          traefik.http.routers.seed-api.tls: "true"
+          traefik.http.routers.seed-api.entrypoints: "websecure"
+          traefik.http.routers.seed-api.tls.certresolver: "myresolver"
+          traefik.http.services.seed-api.loadbalancer.server.port: "8080"
+        env:
+          SPRING_APPLICATION_JSON: "{{ spring_application_json | to_json }}"
+          SPRING_PROFILES_ACTIVE: "{{ seed_env }}"
+        restart_policy: unless-stopped
+        state: started
+      when: api_setup_required
+
+    - name: Run UI
+      docker_container:
+        image: "{{ ecr_url }}/seed-spring-vue/seed-vue"
+        name: "seed-vue"
+        ports:
+          - 8081:8081
+        networks:
+          - name: "seed"
+        env:
+          VUE_APP_API_ADDRESS: "{{ vue_app_api_address }}"
+          VUE_APP_BASIC_AUTH_USERNAME: "{{ vue_app_basicAuthUsername }}"
+          VUE_APP_BASIC_AUTH_PASSWORD: "{{ vue_app_basicAuthPassword }}"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.seed-ui.rule: "Host(`{{ ui_host }}`)"
+          traefik.http.routers.seed-ui.tls: "true"
+          traefik.http.routers.seed-ui.entrypoints: "websecure"
+          traefik.http.routers.seed-ui.tls.certresolver: "myresolver"
+          traefik.http.services.seed-ui.loadbalancer.server.port: "8081"
+        restart_policy: unless-stopped
+        state: started
+      when: ui_setup_required

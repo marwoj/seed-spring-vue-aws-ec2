@@ -1,0 +1,20 @@
+aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"
+aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"
+aws_region: "changeme"                # format: "cn-location-1"
+aws_account_id: "changeme"            # format: "000000000000"
+
+cors_allowed_origin: "changeme"       # format: "http://89.187.123.456:8081" or https://yourdomain.com
+vue_app_api_address: "changeme"       # format: "http://89.187.123.456:8080" or https://api.yourdomain.com
+vue_app_basicAuthUsername: "changeme"
+vue_app_basicAuthPassword: "changeme"
+
+seed_mail_username: "changeme"
+seed_mail_password: "changeme"
+
+# Note: configuration below is required only if you own a domain and you want to configure reverse proxy
+traefik_host: "traefik.changeme"      # format: "traefik.yourdomain.com"
+api_host: "api.changeme"              # format: "api.yourdomain.com"
+ui_host: "changeme"                   # format: "yourdomain.com"
+issuer_email: "changeme@yourdomain.com"
+
+

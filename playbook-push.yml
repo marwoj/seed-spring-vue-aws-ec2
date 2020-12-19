@@ -1,0 +1,119 @@
+---
+#ansible-playbook playbook-push.yml --extra-vars "seed_env=env-ip version_tag=1.0.0"
+#ansible-playbook playbook-push.yml --extra-vars "seed_env=env-domain version_tag=1.0.0"
+#TODO mention debug option -vv
+- name: "build seed-spring-vue"
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ecr_api_image_name: seed-spring-vue/seed-spring
+    ecr_ui_image_name: seed-spring-vue/seed-vue
+    ecr_image_name: ""
+    ecr_image_tags: [ 'latest', '{{ version_tag }}' ]
+    ecr_url: "{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+    ecr_push: true
+    run_npm_install: false
+
+  vars_files:
+    - ~/workspace/secret/{{ seed_env }}/pb-config.yml
+
+  tasks:
+    - fail: msg="The variable 'seed_env' is not defined or empty"
+      when: (seed_env is not defined) or (seed_env|length == 0)
+    - fail: msg="The variable 'aws_access_key_id' is not defined or empty"
+      when: (aws_access_key_id is not defined) or (aws_access_key_id|length == 0)
+    - fail: msg="The variable 'aws_secret_access_key' is not defined or empty"
+      when: (aws_secret_access_key is not defined) or (aws_secret_access_key|length == 0)
+    - fail: msg="The variable 'aws_region' is not defined or empty"
+      when: (aws_region is not defined) or (aws_region|length == 0)
+    - fail: msg="The variable 'aws_account_id' is not defined or empty"
+      when: (aws_account_id is not defined) or (aws_account_id|length == 0)
+    - fail: msg="The variable 'version_tag' is not defined or empty"
+      when: (version_tag is not defined) or (version_tag|length == 0)
+
+    - debug:
+        msg:
+          - seed_env={{ seed_env }}
+          - ecr_image_tags={{ ecr_image_tags }}
+
+    - name: Log into ECR if required.
+      environment:
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+      shell:
+        cmd: aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ ecr_url }}
+      tags: [ 'skip_ansible_lint' ]
+      when: ecr_push
+
+    - set_fact:
+        ecr_image_name: "{{ ecr_api_image_name }}"
+
+    - name: Remove api container
+      docker_container:
+        name: "{{ ecr_image_name }}"
+        state: absent
+
+    - name: Prune images
+      shell: docker rmi $(docker images | grep 'seed-')
+      ignore_errors: True
+
+    - debug:
+        msg: Build image {{ ecr_image_name }}
+
+    - name: Clean api
+      shell: ./gradlew clean
+
+    - name: Build api
+      shell: ./gradlew build
+
+    - name: Build api docker image
+      docker_image:
+        name: "{{ ecr_image_name }}"
+        build:
+          path: ./seed-spring
+        source: build
+
+    - name: Tag and push the api docker image
+      include_tasks: ./ansible/pb-tag-and-push.yml
+      loop: "{{ ecr_image_tags }}"
+      loop_control:
+        loop_var: outer_item
+      when: ecr_push
+
+    - set_fact:
+        ecr_image_name: "{{ ecr_ui_image_name }}"
+
+    - name: Remove UI container
+      docker_container:
+        name: "{{ ecr_image_name }}"
+        state: absent
+
+    - name: Prune images
+      shell: docker rmi $(docker images | grep 'seed-')
+      ignore_errors: True
+
+    - debug:
+        msg: Build image {{ ecr_image_name }}
+
+    - name: Run npm install
+      shell: npm --prefix seed-vue install ./seed-vue
+      when: run_npm_install
+
+    - name: Build UI.
+      shell: npm run --prefix seed-vue build
+
+    - name: Build UI docker image
+      docker_image:
+        name: "{{ ecr_image_name }}"
+        build:
+          path: ./seed-vue
+        source: build
+
+    - name: Tag and push the UI docker image
+      include_tasks: ./ansible/pb-tag-and-push.yml
+      loop: "{{ ecr_image_tags }}"
+      loop_control:
+        loop_var: outer_item
+      when: ecr_push

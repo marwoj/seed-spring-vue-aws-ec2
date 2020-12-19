@@ -1,0 +1,25 @@
+version: "3"
+services:
+  seed-mongo:
+    image: mongo:4.4.2
+    ports:
+      - "27017:27017"
+  seed-spring:
+    build: ./seed-spring
+    ports:
+      - "8080:8080"
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=secret
+    depends_on:
+      - seed-mongo
+  seed-vue:
+    build: ./seed-vue
+    ports:
+      - "8081:8081"
+    environment:
+      - VUE_APP_API_ADDRESS=http://localhost:8080
+      - VUE_APP_BASIC_AUTH_USERNAME=changeme
+      - VUE_APP_BASIC_AUTH_PASSWORD=changeme
+    depends_on:
+      - seed-spring
