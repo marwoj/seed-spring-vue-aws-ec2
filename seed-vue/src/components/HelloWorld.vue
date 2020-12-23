@@ -23,8 +23,9 @@
             </v-form>
           </div>
           <br>
-          <v-alert type="info">Note: If you are using mailgun developers account, make sure that email address is added
-            to recipients list.
+          <v-alert type="info" v-if="message.to">
+            Note: If you are using mailgun developers account, make sure that email address is added to recipients
+            list. Otherwise email won't be sent.
           </v-alert>
         </div>
       </v-col>

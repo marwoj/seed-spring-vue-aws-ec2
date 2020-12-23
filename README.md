@@ -1,10 +1,8 @@
 ## Readme covers
 
-- [About](#about)
-- [Prerequisites](#prerequisites) - what has to be installed at your machine to run project
+- [Prerequisites](#prerequisites) - what you need to install to run project
 - [Running on localhost](#running-on-localhost) - how to start application at localhost, using build tools or docker
-- [Setup required for EC2](#setup-required-for-ec2) - how to create AWS account and which properties are required for
-  configuration file
+- [Setup required for EC2](#setup-required-for-ec2) - how to create AWS account and run EC2
 - [Elastic IP address assigned to EC2 instance](#elastic-ip-address-assigned-to-ec2-instance) - how to run application
   on EC2 and access it using IP address
 - [Domain assigned to EC2 instance](#domain-assigned-to-EC2-instance) - how to run application on EC2, how to access it
@@ -12,12 +10,12 @@
 
 ## About
 
-This is a seed project that allows to run Spring Boot AND Vue applicationS at AWS EC2 (accessed by IP or domain) with a
-minimal setup required.
+This is a seed project that allows to run API (Spring Boot) and UI (Vue) applications at AWS EC2, deployed with Ansible,
+with a minimal setup required. Applications can be accessed by IP or domain name.
 
 Spring Boot application is written in Kotlin. For builds, it uses gradle with plugins: kotlinter, ben-manes.versions and
 test-fixtures. Testcontainers is used to test database setup. Spring Security has configured CORS and Basic
-authentication - *basing on requirements, should be changed to other authentication method ex. JWT*
+authentication - *based on requirements, should be changed to other authentication method ex. JWT*
 
 Deployment process:
 
@@ -25,10 +23,11 @@ Deployment process:
 1. Ansible builds Spring Boot and Vue application
 1. Ansible builds docker images and pushes them to AWS ECR
 1. Ansible starts docker containers on EC2
-1. All services (spring boot, vue, mongo) runs on a single EC2 instance.
-1. Traefik is used as loadbalancer, to route https requests to required containers by domain name.
+1. All services (spring boot, vue, mongo) run on a single EC2 instance. *If required, please take care about database
+   backups.*
+1. Traefik is used as load balancer, to route https requests to required containers by domain name.
 
-That's how the application looks like in a browser. When page is opened it sends request to BE to verify connection.
+That's how the application looks in a browser. When the page is opened it sends a request to BE to verify connection.
 Additionally, if domain and SMTP server is configured, email can be sent.
 
 ![Application](./readme/app.png "Application")
@@ -67,7 +66,7 @@ ___
 
 Use your favourite IDE to start application or execute commands in console
 
-1. Run mongo service and verify you can log in to mongo shell:
+1. Run mongodb service and verify you can log in to mongodb shell:
    > mongo localhost:27017
 1. Run Spring Application
    > ./gradlew -p seed-spring bootRun
@@ -82,7 +81,7 @@ Request to BE should succeed, it means no errors are displayed, and your local I
 
 ### Run docker containers locally
 
-*Note: Make sure that mongo service is stopped, to allow run docker mongo container*
+*Note: Make sure that mongodb service is stopped, to allow run docker mongodb container*
 
 To run docker containers locally, just execute script:
 > sh run-seed-local.sh
@@ -99,6 +98,19 @@ Request to BE should succeed, it means no errors are displayed, and your local I
 
 ![Local IP with timestamp - run on localhost](./readme/local-app.png "Local IP with timestamp - run on localhost")
 
+#### Note: Sending emails from localhost
+
+SMTP configuration is mentioned later, in [SMTP config for emails](#smtp-config-for-emails), but if you want to send
+email from localhost, create `application-secret.yml` and run application with spring profile: `secret`. File is listed
+in `.gitignore` and won't be available in the repository to hide your secrets. Add to file:
+
+```
+spring:
+  mail:
+    username: 'your-smtp-server-username'
+    password: 'your-smtp-server-password'
+```
+
 ___
 
 ## Setup required for EC2
@@ -106,8 +118,8 @@ ___
 If you want to make your application available online, you can deploy it to AWS EC2. This requires minimal
 configuration, described below.
 
-**Note: All docker containers (Spring Boot, Vue, Mongo) will be run on single EC2 instance. It is not recommended for
-production applications, but it is enough for fast prototyping**
+**Note: All docker containers (Spring Boot, Vue, Mongo) will be run on a single EC2 instance. It is not recommended for
+production applications, but it is enough for fast prototyping. If required, please take care about database backups.**
 
 ### Setup EC2
 
@@ -118,13 +130,13 @@ Two access modes to your application deployed on EC2 are available:
 
 You can decide how to access your application later. For now, some **AWS setup is required**
 
-1. Log in to AWS management console *(create account if you don't have one)*
+1. Login to AWS management console *(create account if you don't have one)*
 1. Select region *(it will be used later in configuration file)*
 1. Create new EC2 instance *(ex.: Ubuntu Server 20.04 LTS 64-bit (x86), t2.micro)*<br>
    Note: *Select instance with option: Free tier eligible. It means 750 hours each month per year<br>
    Read more about [AWS Pricing](https://aws.amazon.com/ec2/pricing/). Monitor your spendings in AWS console.*
 1. For sake of seed project, use default configuration of EC2 instance
-1. When prompted, select existing or create new key pair. Save it to *~/workspace/secret/seed.pem*
+1. When prompted, select existing or create a new key pair. Save it to *~/workspace/secret/seed.pem*
    *(It will be required to log-in with ssh to EC2 instance)*
 1. Create Elastic IP address and associate it with EC2 instance *(it will be used later in configuration file)*
 1. Verify that EC2 is up and running. Connect to ECnally, configure Security Group2 using ssh
@@ -134,8 +146,8 @@ You can decide how to access your application later. For now, some **AWS setup i
     - HTTP 443 *expose https port - required only if you want to access your application using domain*<br>
     - TCP 8080 *temporarily expose port for Spring Boot application*<br>
     - TCP 8081 *temporarily expose port for Vue application*<br>
-    - TCP 8082 - only for your IP - *expose port for revers proxy - required only if you want to access your application
-      using domain*<br>
+    - TCP 8082 - only for your IP - *expose port for reverse proxy - required only if you want to access your
+      application using domain*<br>
     - TCP 8083 - only for your IP - *expose port for Spring Boot Actuator where you can monitor your application*<br>
 
 That's how it should look like in AWS:
@@ -143,6 +155,9 @@ That's how it should look like in AWS:
 ![EC2 Security Group Inbound Rules](./readme/inbound-rules.png "EC2 Security Group Inbound Rules")
 
 ### Setup ansible
+
+Ansible is used to push images to ECR, configure EC2 and run docker images on EC2. To be able to use ansible, just
+define IP address of EC2 instance
 
 1. Add entry to the end of the file: `/etc/ansible/hosts`:
 
@@ -155,7 +170,7 @@ ___
 
 ## Elastic IP address assigned to EC2 instance
 
-#### Create configuration file for ansible
+### Create configuration file for ansible
 
 File `pb-config.yml` is a template for ansible configuration. Copy this file to your home
 directory:<br> `~/workspace/secret/env-ip/pb-config.yml` Note: *Path with env-ip is important here, it is used by
@@ -176,6 +191,8 @@ vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic
 push your secrets to public repository, your account will be compromised, github will detect it and AWS will block your
 account**
 
+### Deploy application
+
 #### Configure EC2 instance
 
 > ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
@@ -192,20 +209,20 @@ Note: *Set `db_setup=true` for first run or if you want to reset database. Other
 
 #### Verify application running
 
-1. Log in to EC2
+1. Login to EC2
    > ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
 
 1. When logged in, verify that docker images (`seed-vue`, `seed-vue`, `seed-mongo`) are up and running.
    > docker ps
 1. Open application in a browser: http://89.187.123.456:8081 Note: *replace ip address with your Elastic IP*
 
-Note: *Configuration of EC2 instance is required only for first time. For consecutive deploys, script '
+Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script '
 run-redeploy-ip.sh' can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
 ___
 
 ## Domain assigned to EC2 instance
 
-#### Domain setup
+### Domain setup
 
 1. If you don't own a domain, you can buy one.<br>
    I've selected http://domain.com provider because it was the cheapest one.<br>
@@ -223,30 +240,30 @@ ___
 
 Note: *If you're done, you need to wait even up to 24h (usually it is faster), for changes to take effect.*
 
-#### SMTP config for emails
+### SMTP config for emails
 
-Create mailgun account if you don't have one. Note: *phone number verification is required*. For development purposes,
-mailgun offers free plan - emails to 5 verified email addresses can be sent. No domain configuration is required for
-free plan, because sandbox environment is used.
+Create a mailgun account if you don't have one. Note: *phone number verification is required*. For development purposes,
+mailgun offers a free plan - emails to 5 verified email addresses can be sent. No domain configuration is required for
+the free plan, because the sandbox environment is used.
 
-From menu: *Sending >Domains* select your sandbox domain, select *SMTP* option, and get your credentials. Value  *
-Username* will be used to set *seed_mail_username* and *Default password* will be used to set *seed_mail_password*
+From menu: *Sending >Domains* select your sandbox domain, select *SMTP* option, and get your credentials. Value  
+*Username* will be used to set *seed_mail_username* and *Default password* will be used to set *seed_mail_password*
 in *pb-config.yml*
-Other values are configured in *application.yml* and doesn't have to be changed.
+Other values are configured in *application.yml* and don't have to be changed.
 
 ![SMTP configuration](./readme/smtp.png "SMTP configuration")
 
 The paid plan may be used if needed, but it requires additional domain configuration. Mailgun provides simple and
-detailed instruction how to do this, and it is not in the scope of this seed project.
+detailed instructions on how to do this, and it is not in the scope of this seed project.
 
-#### Create configuration file for ansible
+### Create configuration file for ansible
 
 File `pb-config.yml` is a template for ansible configuration. Copy this file to your home
 directory: `~/workspace/secret/env-domain/pb-config.yml` Note: *Path with env-domain is important here, it is used by
 ansible*
 
-Replace 'changeme' values with your account details. Bold text shows values that has to be changed comparing to
-configuration required to access application only by IP.
+Replace 'changeme' values with your account details. Bold text shows values that have to be changed compared to
+configuration required to access applications only by IP.
 
 > aws_access_key_id: "changeme"       # format: "AAAAAAAAAAAAAAAAAAAA"<br>
 aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"<br>
@@ -267,6 +284,13 @@ issuer_email: "changeme@yourdomain.com"**
 push your secrets to public repository, your account will be compromised, github will detect it and AWS will block your
 account**
 
+### Deploy application
+
+#### Configure EC2 instance
+
+This step is required only once, so if you already did it, you can skip this step
+> ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
+
 #### Build docker images and push them to ECR
 
 > ansible-playbook playbook-push.yml --extra-vars "seed_env=env-domain version_tag=1.0.0"
@@ -279,14 +303,14 @@ Note: *Set `db_setup=true` for first run or if you want to reset database. Other
 
 #### Verify application running
 
-1. Log in to EC2
+1. Login to EC2
    > ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
 
 1. When logged in, verify that docker images (`seed-vue`, `seed-vue`, `seed-mongo`) are up and running.
    > docker ps
 1. Open application in a browser: http://yourdomain.com Note:
 
-Note: *Configuration of EC2 instance is required only for first time. For consecutive deploys, script '
+Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script '
 run-redeploy-domain.sh' can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
 
 #### Note: after everything, block ports 8080,8081 - make them available only from your IP
@@ -298,8 +322,10 @@ ___
 Note: For development purposes, in `playbook-run.yml` uncomment acme-staging ca server, as shown below:
 > "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 
-To generate certificate once again, remove old one and run `playbook-run.ym` once again. See traefik logs:
+To re-generate certificates, at EC2 remove the old one, and at your machine run `playbook-run.yml` once again. See
+traefik logs for verification:
+> sudo rm /home/ubuntu/letsencrypt/acme.json
 > docker logs seed-traefik
 
 If everything works fine - no errors should be displayed
-> sudo rm /home/ubuntu/letsencrypt/acme.json
+
