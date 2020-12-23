@@ -25,7 +25,7 @@ Deployment process:
 1. Ansible starts docker containers on EC2
 1. All services (spring boot, vue, mongo) run on a single EC2 instance. *If required, please take care about database
    backups.*
-1. Traefik is used as load balancer, to route https requests to required containers by domain name.
+1. Traefik is used as a revers proxy, to route https requests to required containers by domain name.
 
 That's how the application looks in a browser. When the page is opened it sends a request to BE to verify connection.
 Additionally, if domain and SMTP server is configured, email can be sent.
@@ -216,8 +216,8 @@ Note: *Set `db_setup=true` for first run or if you want to reset database. Other
    > docker ps
 1. Open application in a browser: http://89.187.123.456:8081 Note: *replace ip address with your Elastic IP*
 
-Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script '
-run-redeploy-ip.sh' can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
+Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script 
+*run-redeploy-ip.sh* can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
 ___
 
 ## Domain assigned to EC2 instance
@@ -310,8 +310,8 @@ Note: *Set `db_setup=true` for first run or if you want to reset database. Other
    > docker ps
 1. Open application in a browser: http://yourdomain.com Note:
 
-Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script '
-run-redeploy-domain.sh' can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
+Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script
+*run-redeploy-domain.sh* can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
 
 #### Note: after everything, block ports 8080,8081 - make them available only from your IP
 
