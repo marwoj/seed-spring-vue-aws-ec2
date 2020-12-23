@@ -42,21 +42,33 @@ Additionally, if domain and SMTP server is configured, email can be sent.
 1. Ansible
 1. NPM
 1. pip3
-   > sudo apt install python3-pip
+   ```shell   
+   sudo apt install python3-pip
+   ```
 1. boto3 - required to operate with AWS EC2 and ECR
-   > pip3 install boto3
+   ```shell
+   pip3 install boto3
+   ```
 1. AWS CLI2
-   > https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+   ```
+   https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
+   ```
 
 ### Additional setup required
 
 1. Create group docker
-   > sudo groupadd docker
+   ```shell
+   sudo groupadd docker
+   ```
 1. Add currently logged user to docker group
-   > sudo usermod -aG docker $USER
+   ```shell
+   sudo usermod -aG docker $USER
+   ```
 1. Logout and Login
 1. Verify that user is added to docker group
-   > groups | grep docker
+   ```shell
+   groups | grep docker
+   ```
 
 ___
 
@@ -67,12 +79,18 @@ ___
 Use your favourite IDE to start application or execute commands in console
 
 1. Run mongodb service and verify you can log in to mongodb shell:
-   > mongo localhost:27017
+   ```shell
+   mongo localhost:27017
+   ```
 1. Run Spring Application
-   > ./gradlew -p seed-spring bootRun
+   ```shell
+   ./gradlew -p seed-spring bootRun
+   ```
 1. Run Vue Application
-   > npm install --prefix seed-vue<br>
+   ```shell
+   npm install --prefix seed-vue<br>
    npm run --prefix seed-vue serve
+   ```
 
 As a result, you should be able to open application at `localhost:8081` <br>
 Request to BE should succeed, it means no errors are displayed, and your local IP with timestamp is displayed.
@@ -84,11 +102,15 @@ Request to BE should succeed, it means no errors are displayed, and your local I
 *Note: Make sure that mongodb service is stopped, to allow run docker mongodb container*
 
 To run docker containers locally, just execute script:
-> sh run-seed-local.sh
+```shell
+sh run-seed-local.sh
+```
 
 Scripts `run-seed-local.sh` builds Spring Boot and Vue applications, builds images and runs them.<br>
 When script is executed, verify that everything works as expected
-> `docker ps | grep seed `
+```shell
+docker ps | grep seed
+```
 
 Verify that three containers are up and running:<br>
 *seed-spring-vue-aws_seed-vue*, *seed-spring-vue-aws_seed-spring*, *mongo*
@@ -139,8 +161,10 @@ You can decide how to access your application later. For now, some **AWS setup i
 1. When prompted, select existing or create a new key pair. Save it to *~/workspace/secret/seed.pem*
    *(It will be required to log-in with ssh to EC2 instance)*
 1. Create Elastic IP address and associate it with EC2 instance *(it will be used later in configuration file)*
-1. Verify that EC2 is up and running. Connect to ECnally, configure Security Group2 using ssh
-   > ssh -i ~/workspace/secret/seed.pem ubuntu@[ELASTIC-IP-HERE]
+1. Verify that EC2 is up and running. Connect to EC2 using ssh
+   ```shell
+   ssh -i ~/workspace/secret/seed.pem ubuntu@[ELASTIC-IP-HERE]
+   ```
 1. Additionally, configure Security Group assigned to launched EC2.<br>
    Enable Inbound Rules:
     - HTTP 443 *expose https port - required only if you want to access your application using domain*<br>
@@ -161,8 +185,10 @@ define IP address of EC2 instance
 
 1. Add entry to the end of the file: `/etc/ansible/hosts`:
 
-> [ec2-seed]<br>
+```
+[ec2-seed]<br>
 89.187.123.456 ansible_user=ubuntu<br>
+```
 
 Note: *replace IP address with your Elastic IP*
 
@@ -177,8 +203,8 @@ directory:<br> `~/workspace/secret/env-ip/pb-config.yml` Note: *Path with env-ip
 ansible*
 
 Replace 'changeme' values with your account details.
-
-> aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"<br>
+```
+aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"<br>
 aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"<br>
 aws_region: "changeme"                # format: "cn-location-1"<br>
 aws_account_id: "changeme"            # format: "000000000000"<br>
@@ -186,6 +212,7 @@ cors_allowed_origin: "changeme"       # format: "http://89.187.123.456:8081" or 
 vue_app_api_address: "changeme"       # format: "http://89.187.123.456:8080" - your Elastic IP<br>
 vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication<br>
 vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication<br>
+```
 
 **Important Note:** **Do not store your account details in template file or any other file in git repository. If you
 push your secrets to public repository, your account will be compromised, github will detect it and AWS will block your
@@ -195,25 +222,33 @@ account**
 
 #### Configure EC2 instance
 
-> ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
-
+```shell
+ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
+```
 #### Build docker images and push them to ECR
 
-> ansible-playbook playbook-push.yml --extra-vars "seed_env=env-ip version_tag=1.0.0"
+```shell
+ansible-playbook playbook-push.yml --extra-vars "seed_env=env-ip version_tag=1.0.0"
+```
 
 #### Run docker images on EC2
 
-> ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-ip seed_hosts=ec2-seed db_setup=false"
+```shell
+ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-ip seed_hosts=ec2-seed db_setup=false"
+```
 
 Note: *Set `db_setup=true` for first run or if you want to reset database. Otherwise, use `db_setup=false`*
 
 #### Verify application running
 
 1. Login to EC2
-   > ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
-
+   ```shell
+   ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
+   ```
 1. When logged in, verify that docker images (`seed-vue`, `seed-vue`, `seed-mongo`) are up and running.
-   > docker ps
+   ```shell
+   docker ps
+   ```
 1. Open application in a browser: http://89.187.123.456:8081 Note: *replace ip address with your Elastic IP*
 
 Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script 
@@ -231,11 +266,17 @@ ___
 1. Create email account - *it will be required when https ca certificates will be generated*
 1. Create cloudflare account https://www.cloudflare.com/ *(free account available)*.<br>
    Log-in and add DNS entries for your domain. Replace CNAME record with your own domain.
+   
    ![Cloudflare dns setup](./readme/dns.png "Cloudflare dns setup")
+   
 1. Allow cloudflare to manage your DNS. Cloudflare provides detailed instruction how to do this, like below
+   
    ![Cloudflare domain management](./readme/cf-manage.png "Cloudflare domain management")
+   
 1. Point to cloudflare nameservers, at domain.com it can be done like below:
+   
    ![Point to cloudflare nameservers](./readme/domain.png "Point to cloudflare nameservers")
+   
 1. In cloudflare enable http to https redirection and select option to always use https
 
 Note: *If you're done, you need to wait even up to 24h (usually it is faster), for changes to take effect.*
@@ -265,7 +306,8 @@ ansible*
 Replace 'changeme' values with your account details. Bold text shows values that have to be changed compared to
 configuration required to access applications only by IP.
 
-> aws_access_key_id: "changeme"       # format: "AAAAAAAAAAAAAAAAAAAA"<br>
+```
+aws_access_key_id: "changeme"       # format: "AAAAAAAAAAAAAAAAAAAA"<br>
 aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"<br>
 aws_region: "changeme"                # format: "cn-location-1"<br>
 aws_account_id: "changeme"            # format: "000000000000"<br>
@@ -279,6 +321,7 @@ traefik_host: "traefik.changeme"      # format: "traefik.yourdomain.com"<br>
 api_host: "api.changeme"              # format: "api.yourdomain.com"<br>
 ui_host: "changeme"                   # format: "yourdomain.com"
 issuer_email: "changeme@yourdomain.com"**
+```
 
 **Important Note:** **Do not store your account details in template file or any other file in git repository. If you
 push your secrets to public repository, your account will be compromised, github will detect it and AWS will block your
@@ -289,25 +332,34 @@ account**
 #### Configure EC2 instance
 
 This step is required only once, so if you already did it, you can skip this step
-> ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
+```shell
+ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
+```
 
 #### Build docker images and push them to ECR
 
-> ansible-playbook playbook-push.yml --extra-vars "seed_env=env-domain version_tag=1.0.0"
+```shell
+ansible-playbook playbook-push.yml --extra-vars "seed_env=env-domain version_tag=1.0.0"
+```
 
 #### Run docker images on EC2
 
-> ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-domain seed_hosts=ec2-seed db_setup=false"
+```shell
+ansible-playbook playbook-run.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_env=env-domain seed_hosts=ec2-seed db_setup=false"
+```
 
 Note: *Set `db_setup=true` for first run or if you want to reset database. Otherwise, use `db_setup=false`*
 
 #### Verify application running
 
 1. Login to EC2
-   > ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
-
+   ```shell
+   ssh -i ~/workspace/secret/seed.pem ubuntu@89.187.123.456 Note: replace ip address with your Elastic IP
+   ```
 1. When logged in, verify that docker images (`seed-vue`, `seed-vue`, `seed-mongo`) are up and running.
-   > docker ps
+   ```shell
+   docker ps
+   ```
 1. Open application in a browser: http://yourdomain.com Note:
 
 Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script
@@ -320,12 +372,17 @@ ___
 ## Troubleshooting
 
 Note: For development purposes, in `playbook-run.yml` uncomment acme-staging ca server, as shown below:
-> "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+```
+"--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+```
 
 To re-generate certificates, at EC2 remove the old one, and at your machine run `playbook-run.yml` once again. See
 traefik logs for verification:
-> sudo rm /home/ubuntu/letsencrypt/acme.json
-> docker logs seed-traefik
+
+```shell
+sudo rm /home/ubuntu/letsencrypt/acme.json
+docker logs seed-traefik
+```
 
 If everything works fine - no errors should be displayed
 
