@@ -62,11 +62,8 @@
     - debug:
         msg: Build image {{ ecr_image_name }}
 
-    - name: Clean api
-      shell: ./gradlew clean
-
-    - name: Build api
-      shell: ./gradlew build
+    - name: Assemble images
+      shell: ./seed-spring/gradlew assemble
 
     - name: Build api docker image
       docker_image:

@@ -1,7 +1,7 @@
 ## Readme covers
 
 - [Prerequisites](#prerequisites) - what you need to install to run project
-- [Running on localhost](#running-on-localhost) - how to start application at localhost, using build tools or docker
+- [Running on localhost](#running-on-localhost) - how to start application, using build tools or docker
 - [Setup required for EC2](#setup-required-for-ec2) - how to create AWS account and run EC2
 - [Elastic IP address assigned to EC2 instance](#elastic-ip-address-assigned-to-ec2-instance) - how to run application
   on EC2 and access it using IP address
@@ -13,8 +13,8 @@
 This is a seed project that allows to run API (Spring Boot) and UI (Vue) applications at AWS EC2, deployed with Ansible,
 with a minimal setup required. Applications can be accessed by IP or domain name.
 
-Spring Boot application is written in Kotlin. For builds, it uses gradle with plugins: kotlinter, ben-manes.versions and
-test-fixtures. Testcontainers is used to test database setup. Spring Security has configured CORS and Basic
+Spring Boot application is written in Kotlin. For builds, it uses gradle with plugins: *kotlinter*, *ben-manes.versions*
+and *test-fixtures*. Testcontainers is used to test database setup. Spring Security has configured CORS and Basic
 authentication - *based on requirements, should be changed to other authentication method ex. JWT*
 
 Deployment process:
@@ -25,7 +25,7 @@ Deployment process:
 1. Ansible starts docker containers on EC2
 1. All services (spring boot, vue, mongo) run on a single EC2 instance. *If required, please take care about database
    backups.*
-1. Traefik is used as a revers proxy, to route https requests to required containers by domain name.
+1. Traefik is used as a reverse proxy, to route https requests to required containers by domain name.
 
 That's how the application looks in a browser. When the page is opened it sends a request to BE to verify connection.
 Additionally, if domain and SMTP server is configured, email can be sent.
@@ -84,11 +84,11 @@ Use your favourite IDE to start application or execute commands in console
    ```
 1. Run Spring Application
    ```shell
-   ./gradlew -p seed-spring bootRun
+   cd seed-spring && ./gradlew bootRun
    ```
 1. Run Vue Application
    ```shell
-   npm install --prefix seed-vue<br>
+   npm install --prefix seed-vue
    npm run --prefix seed-vue serve
    ```
 
@@ -102,12 +102,14 @@ Request to BE should succeed, it means no errors are displayed, and your local I
 *Note: Make sure that mongodb service is stopped, to allow run docker mongodb container*
 
 To run docker containers locally, just execute script:
+
 ```shell
 sh run-seed-local.sh
 ```
 
 Scripts `run-seed-local.sh` builds Spring Boot and Vue applications, builds images and runs them.<br>
 When script is executed, verify that everything works as expected
+
 ```shell
 docker ps | grep seed
 ```
@@ -124,7 +126,7 @@ Request to BE should succeed, it means no errors are displayed, and your local I
 
 SMTP configuration is mentioned later, in [SMTP config for emails](#smtp-config-for-emails), but if you want to send
 email from localhost, create `application-secret.yml` and run application with spring profile: `secret`. File is listed
-in `.gitignore` and won't be available in the repository to hide your secrets. Add to file:
+in `.gitignore` and won't be available in the repository to hide your secrets. Add to `application-secret.yml` file:
 
 ```
 spring:
@@ -168,11 +170,10 @@ You can decide how to access your application later. For now, some **AWS setup i
 1. Additionally, configure Security Group assigned to launched EC2.<br>
    Enable Inbound Rules:
     - HTTP 443 *expose https port - required only if you want to access your application using domain*<br>
-    - TCP 8080 *temporarily expose port for Spring Boot application*<br>
-    - TCP 8081 *temporarily expose port for Vue application*<br>
-    - TCP 8082 - only for your IP - *expose port for reverse proxy - required only if you want to access your
-      application using domain*<br>
-    - TCP 8083 - only for your IP - *expose port for Spring Boot Actuator where you can monitor your application*<br>
+    - TCP 8080 *expose port for Spring Boot application (required if application accessed by IP)*<br>
+    - TCP 8081 *temporarily expose port for Vue application (required if application accessed by IP)*<br>
+    - TCP 8082 *expose port (only from your IP) for reverse proxy*<br>
+    - TCP 8083 *expose port (only from your IP) for Spring Boot Actuator where you can monitor your application*<br>
 
 That's how it should look like in AWS:
 
@@ -180,14 +181,14 @@ That's how it should look like in AWS:
 
 ### Setup ansible
 
-Ansible is used to push images to ECR, configure EC2 and run docker images on EC2. To be able to use ansible, just
+Ansible is used to push images to ECR, to configure EC2 and run docker images on EC2. To be able to use ansible, just
 define IP address of EC2 instance
 
 1. Add entry to the end of the file: `/etc/ansible/hosts`:
 
 ```
-[ec2-seed]<br>
-89.187.123.456 ansible_user=ubuntu<br>
+[ec2-seed]
+89.187.123.456 ansible_user=ubuntu
 ```
 
 Note: *replace IP address with your Elastic IP*
@@ -203,15 +204,16 @@ directory:<br> `~/workspace/secret/env-ip/pb-config.yml` Note: *Path with env-ip
 ansible*
 
 Replace 'changeme' values with your account details.
+
 ```
-aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"<br>
-aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"<br>
-aws_region: "changeme"                # format: "cn-location-1"<br>
-aws_account_id: "changeme"            # format: "000000000000"<br>
+aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"
+aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"
+aws_region: "changeme"                # format: "cn-location-1"
+aws_account_id: "changeme"            # format: "000000000000"
 cors_allowed_origin: "changeme"       # format: "http://89.187.123.456:8081" or https://yourdomain.com
-vue_app_api_address: "changeme"       # format: "http://89.187.123.456:8080" - your Elastic IP<br>
-vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication<br>
-vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication<br>
+vue_app_api_address: "changeme"       # format: "http://89.187.123.456:8080" - your Elastic IP
+vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication
+vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication
 ```
 
 **Important Note:** **Do not store your account details in template file or any other file in git repository. If you
@@ -225,6 +227,7 @@ account**
 ```shell
 ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
 ```
+
 #### Build docker images and push them to ECR
 
 ```shell
@@ -249,10 +252,10 @@ Note: *Set `db_setup=true` for first run or if you want to reset database. Other
    ```shell
    docker ps
    ```
-1. Open application in a browser: http://89.187.123.456:8081 Note: *replace ip address with your Elastic IP*
+1. Open application in a browser: http://[ELASTIC-IP]:8081 Note: *replace [ELASTIC-IP] with your Elastic IP*
 
-Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script 
-*run-redeploy-ip.sh* can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
+Note: *Configuration of EC2 instance is required only for the first time. For consecutive deploys, script
+`run-redeploy-ip.sh` can be used - it runs `playbook-push.yml` and `playbook-run.yml`*
 ___
 
 ## Domain assigned to EC2 instance
@@ -266,17 +269,17 @@ ___
 1. Create email account - *it will be required when https ca certificates will be generated*
 1. Create cloudflare account https://www.cloudflare.com/ *(free account available)*.<br>
    Log-in and add DNS entries for your domain. Replace CNAME record with your own domain.
-   
+
    ![Cloudflare dns setup](./readme/dns.png "Cloudflare dns setup")
-   
+
 1. Allow cloudflare to manage your DNS. Cloudflare provides detailed instruction how to do this, like below
-   
+
    ![Cloudflare domain management](./readme/cf-manage.png "Cloudflare domain management")
-   
+
 1. Point to cloudflare nameservers, at domain.com it can be done like below:
-   
+
    ![Point to cloudflare nameservers](./readme/domain.png "Point to cloudflare nameservers")
-   
+
 1. In cloudflare enable http to https redirection and select option to always use https
 
 Note: *If you're done, you need to wait even up to 24h (usually it is faster), for changes to take effect.*
@@ -287,7 +290,7 @@ Create a mailgun account if you don't have one. Note: *phone number verification
 mailgun offers a free plan - emails to 5 verified email addresses can be sent. No domain configuration is required for
 the free plan, because the sandbox environment is used.
 
-From menu: *Sending >Domains* select your sandbox domain, select *SMTP* option, and get your credentials. Value  
+From menu: *Sending > Domains* select your sandbox domain, select *SMTP* option, and get your credentials. Value  
 *Username* will be used to set *seed_mail_username* and *Default password* will be used to set *seed_mail_password*
 in *pb-config.yml*
 Other values are configured in *application.yml* and don't have to be changed.
@@ -303,24 +306,24 @@ File `pb-config.yml` is a template for ansible configuration. Copy this file to 
 directory: `~/workspace/secret/env-domain/pb-config.yml` Note: *Path with env-domain is important here, it is used by
 ansible*
 
-Replace 'changeme' values with your account details. Bold text shows values that have to be changed compared to
-configuration required to access applications only by IP.
+Replace 'changeme' values with your account details. Instead of new values (`seed_mail_username` etc...), note
+that `cors_allowed_origin` and `vue_app_api_address` has to be changed.
 
 ```
-aws_access_key_id: "changeme"       # format: "AAAAAAAAAAAAAAAAAAAA"<br>
-aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"<br>
-aws_region: "changeme"                # format: "cn-location-1"<br>
-aws_account_id: "changeme"            # format: "000000000000"<br>
-**cors_allowed_origin: "changeme"     # format: "https://yourdomain.com"<br>
-vue_app_api_address: "changeme"       # format: "https://api.yourdomain.com" - your domain prefixed with api subdomain**<br>
-vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication<br>
-vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication<br><br>
-**seed_mail_username: "changeme"      # Set if you want to enable email sending - Read more in section: [SMTP config for emails](#smtp-config-for-emails)<br>
-seed_mail_password: "changeme"        # Set if you want to enable email sending - Read more in section: [SMTP config for emails](#smtp-config-for-emails)<br>
-traefik_host: "traefik.changeme"      # format: "traefik.yourdomain.com"<br>
-api_host: "api.changeme"              # format: "api.yourdomain.com"<br>
+aws_access_key_id: "changeme"         # format: "AAAAAAAAAAAAAAAAAAAA"
+aws_secret_access_key: "changeme"     # format: "aaaaaaaaaaaaaaaaaaaa+aaaaaaaaaaaaaaaaaaa"
+aws_region: "changeme"                # format: "cn-location-1"
+aws_account_id: "changeme"            # format: "000000000000"
+cors_allowed_origin: "changeme"       # format: "https://yourdomain.com"
+vue_app_api_address: "changeme"       # format: "https://api.yourdomain.com" - your domain prefixed with api subdomain
+vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication
+vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication
+seed_mail_username: "changeme"        # Set if you want to enable email sending - Read more in section: [SMTP config for emails](#smtp-config-for-emails)
+seed_mail_password: "changeme"        # Set if you want to enable email sending - Read more in section: [SMTP config for emails](#smtp-config-for-emails)
+traefik_host: "traefik.changeme"      # format: "traefik.yourdomain.com"
+api_host: "api.changeme"              # format: "api.yourdomain.com"
 ui_host: "changeme"                   # format: "yourdomain.com"
-issuer_email: "changeme@yourdomain.com"**
+issuer_email: "changeme@yourdomain.com"
 ```
 
 **Important Note:** **Do not store your account details in template file or any other file in git repository. If you
@@ -332,6 +335,7 @@ account**
 #### Configure EC2 instance
 
 This step is required only once, so if you already did it, you can skip this step
+
 ```shell
 ansible-playbook playbook-ec2-configure.yml --private-key ~/workspace/secret/seed.pem --extra-vars "seed_hosts=ec2-dev"
 ```
@@ -371,7 +375,10 @@ ___
 
 ## Troubleshooting
 
+#### Certificates generation
+
 Note: For development purposes, in `playbook-run.yml` uncomment acme-staging ca server, as shown below:
+
 ```
 "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 ```
@@ -386,3 +393,13 @@ docker logs seed-traefik
 
 If everything works fine - no errors should be displayed
 
+#### Troubles with VPN
+
+If you are using VPN, and you run application on localhost with docker images, you may see an error
+
+```shell
+Creating network "seed-spring-vue-aws-ec2_default" with the default driver
+ERROR: could not find an available, non-overlapping IPv4 address pool among the defaults to assign to the network
+```
+
+To make it work, just disconnect from VPN

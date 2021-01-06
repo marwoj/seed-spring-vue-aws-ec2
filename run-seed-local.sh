@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 docker-compose down &&
 
-./gradlew -p seed-spring clean build &&
+./seed-spring/gradlew assemble &&
 docker build seed-spring -t seed-spring &&
 
 npm install --prefix seed-vue &&

@@ -8,7 +8,7 @@
             <v-chip label outlined color="blue">{{ dateTime }}</v-chip>
             <span> request from address </span>
             <v-chip label outlined color="blue">{{ response.ip }}</v-chip>
-            <span> was sent to API. Hurra! </span>
+            <span> was sent to API. Hurray! </span>
           </div>
           <div>
             <v-form ref="form" v-model="formValid" class="mt-6">
