@@ -18,8 +18,8 @@
                             required></v-text-field>
               <v-text-field v-model="message.body" :counter="100" :rules="fieldRules" label="Message"
                             required></v-text-field>
-              <v-btn :disabled="!formValid" color="success" class="mr-4" @click="sendMail">Send email</v-btn>
-              <v-btn color="error" class="mr-4" @click="reset">Reset Form</v-btn>
+              <v-btn :disabled="!formValid" color="success" elevation="1" class="mr-4" @click="sendMail">Send email</v-btn>
+              <v-btn color="error" class="mr-4" elevation="1" @click="reset">Reset Form</v-btn>
             </v-form>
           </div>
           <br>

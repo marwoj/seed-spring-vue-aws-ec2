@@ -12,12 +12,12 @@
         <v-row class="text-center">
           <v-col>
             <router-link to="/" class="mr-2">
-              <v-btn color="primary">Home
+              <v-btn color="primary" elevation="1">Home
                 <v-icon right dark>mdi-link</v-icon>
               </v-btn>
             </router-link>
             <router-link to="/about" class="mr-2">
-              <v-btn color="secondary">About
+              <v-btn color="secondary" elevation="1">About
                 <v-icon right dark>mdi-link</v-icon>
               </v-btn>
             </router-link>
