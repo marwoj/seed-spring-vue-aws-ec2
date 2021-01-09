@@ -6,8 +6,8 @@ plugins {
     id("org.jmailen.kotlinter") version "3.3.0"
     id("java-test-fixtures")
     id("com.github.ben-manes.versions") version "0.36.0"
-    kotlin("jvm") version "1.4.21"
-    kotlin("plugin.spring") version "1.4.21"
+    kotlin("jvm") version "1.4.30-M1"
+    kotlin("plugin.spring") version "1.4.30-M1"
 }
 
 group = "pl.seed"
@@ -24,7 +24,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb-reactive")
     implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -36,6 +36,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
     testFixturesImplementation("org.testcontainers:mongodb:1.15.1")
     testFixturesApi("org.springframework.boot:spring-boot-starter-test")
 }

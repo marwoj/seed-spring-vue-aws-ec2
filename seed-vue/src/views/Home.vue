@@ -86,7 +86,7 @@
         </div>
       </v-col>
     </v-row>
-    <HelloWorld :response="response" @sendEmail="sendEmail"/>
+    <HelloWorld :response="response" :show-error="showError" @sendEmail="sendEmail"/>
     <v-snackbar v-model="snackbar.show" :color="snackbar.color">{{ snackbar.message }}
       <template v-slot:action="{ attrs }">
         <v-btn color="indigo" text v-bind="attrs" @click="snackbar.show = false">Close</v-btn>
@@ -107,7 +107,8 @@ export default {
   },
   data() {
     return {
-      response: {},
+      response: null,
+      showError: false,
       snackbar: {
         show: false,
         message: "",
@@ -136,10 +137,12 @@ export default {
     SeedRequest.getMessage()
         .then(res => {
           this.response = res;
+          this.showError = false;
         })
         .catch(error => {
           console.log(error);
-          this.showSnackbar("Could not call BE", "warning");
+          this.showError = true;
+          this.showSnackbar("Request to API failed!", "warning");
         });
   }
 };
