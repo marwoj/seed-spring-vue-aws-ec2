@@ -5,7 +5,7 @@ seed:
 
 management:
   server:
-    port: 8083 # TODO mention about actuator and different port to be unlocked + mention about 8082 traefik port
+    port: 8083
   security:
     enabled: false
   endpoints:

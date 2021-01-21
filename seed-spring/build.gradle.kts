@@ -1,13 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.4.1"
-    id("io.spring.dependency-management") version "1.0.10.RELEASE"
+    id("org.springframework.boot") version "2.4.2"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("org.jmailen.kotlinter") version "3.3.0"
     id("java-test-fixtures")
     id("com.github.ben-manes.versions") version "0.36.0"
-    kotlin("jvm") version "1.4.30-M1"
-    kotlin("plugin.spring") version "1.4.30-M1"
+    kotlin("jvm") version "1.4.30-RC"
+    kotlin("plugin.spring") version "1.4.30-RC"
 }
 
 group = "pl.seed"

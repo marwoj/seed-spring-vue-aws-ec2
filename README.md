@@ -179,9 +179,9 @@ That's how it should look like in AWS:
 
 ![EC2 Security Group Inbound Rules](./readme/inbound-rules.png "EC2 Security Group Inbound Rules")
 
-### Setup ansible
+### Setup Ansible
 
-Ansible is used to push images to ECR, to configure EC2 and run docker images on EC2. To be able to use ansible, just
+Ansible is used to push images to ECR, to configure EC2 and run docker images on EC2. To be able to use Ansible, just
 define IP address of EC2 instance
 
 1. Add entry to the end of the file: `/etc/ansible/hosts`:
@@ -199,9 +199,9 @@ ___
 
 ### Create configuration file for ansible
 
-File `pb-config.yml` is a template for ansible configuration. Copy this file to your home
+File `pb-config.yml` is a template for Ansible configuration. Copy this file to your home
 directory:<br> `~/workspace/secret/env-ip/pb-config.yml` Note: *Path with env-ip is important here, it is used by
-ansible*
+Ansible*
 
 Replace 'changeme' values with your account details.
 
@@ -300,11 +300,11 @@ Other values are configured in *application.yml* and don't have to be changed.
 The paid plan may be used if needed, but it requires additional domain configuration. Mailgun provides simple and
 detailed instructions on how to do this, and it is not in the scope of this seed project.
 
-### Create configuration file for ansible
+### Create configuration file for Ansible
 
-File `pb-config.yml` is a template for ansible configuration. Copy this file to your home
+File `pb-config.yml` is a template for Ansible configuration. Copy this file to your home
 directory: `~/workspace/secret/env-domain/pb-config.yml` Note: *Path with env-domain is important here, it is used by
-ansible*
+Ansible*
 
 Replace 'changeme' values with your account details. Instead of new values (`seed_mail_username` etc...), note
 that `cors_allowed_origin` and `vue_app_api_address` has to be changed.
@@ -374,6 +374,23 @@ Note: *Configuration of EC2 instance is required only for the first time. For co
 ___
 
 ## Troubleshooting
+
+#### Backup & restore
+
+To prevent data loss, you can take care of backups. To make backup, allow accessing port _27017_ from your IP address -
+edit EC2 inbound rules as already described.
+
+```shell
+mongodump --host="89.187.123.456:27017"" --db="seed" --out="./seed-db/"
+```
+
+If you would accidentally remove your database, you can restore it with:
+
+```shell
+mongorestore --host="89.187.123.456:27017"  ./seed-db/
+```
+
+Note: Replace ip address with your elastic IP assigned to EC2
 
 #### Certificates generation
 
