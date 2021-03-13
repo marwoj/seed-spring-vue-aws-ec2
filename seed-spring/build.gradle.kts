@@ -6,8 +6,8 @@ plugins {
     id("org.jmailen.kotlinter") version "3.3.0"
     id("java-test-fixtures")
     id("com.github.ben-manes.versions") version "0.38.0"
-    kotlin("jvm") version "1.5.0-M1"
-    kotlin("plugin.spring") version "1.5.0-M1"
+    kotlin("jvm") version "1.4.30-RC"
+    kotlin("plugin.spring") version "1.4.30-RC"
 }
 
 group = "pl.seed"
