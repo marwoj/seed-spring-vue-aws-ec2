@@ -169,6 +169,7 @@ You can decide how to access your application later. For now, some **AWS setup i
    ```
 1. Additionally, configure Security Group assigned to launched EC2.<br>
    Enable Inbound Rules:
+    - HTTP 80 *expose http port to allow certificates auto-renewal*<br>
     - HTTP 443 *expose https port - required only if you want to access your application using domain*<br>
     - TCP 8080 *expose port for Spring Boot application (required if application accessed by IP)*<br>
     - TCP 8081 *temporarily expose port for Vue application (required if application accessed by IP)*<br>
