@@ -1,13 +1,13 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.4.4"
+    id("org.springframework.boot") version "2.4.5"
     id("io.spring.dependency-management") version "1.0.11.RELEASE"
     id("org.jmailen.kotlinter") version "3.4.0"
     id("java-test-fixtures")
     id("com.github.ben-manes.versions") version "0.38.0"
-    kotlin("jvm") version "1.4.30-RC"
-    kotlin("plugin.spring") version "1.4.30-RC"
+    kotlin("jvm") version "1.5.0"
+    kotlin("plugin.spring") version "1.5.0"
 }
 
 group = "pl.seed"
@@ -17,8 +17,6 @@ java.sourceCompatibility = JavaVersion.VERSION_11
 repositories {
     mavenCentral()
 }
-
-extra["testcontainersVersion"] = "1.15.2"
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -37,7 +35,7 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
-    testFixturesImplementation("org.testcontainers:mongodb:1.15.2")
+    testFixturesImplementation("org.testcontainers:mongodb:1.15.3")
     testFixturesApi("org.springframework.boot:spring-boot-starter-test")
 }
 
