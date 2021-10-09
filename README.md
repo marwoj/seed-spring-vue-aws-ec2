@@ -215,6 +215,12 @@ cors_allowed_origin: "changeme"       # format: "http://89.187.123.456:8081" or 
 vue_app_api_address: "changeme"       # format: "http://89.187.123.456:8080" - your Elastic IP
 vue_app_basicAuthUsername: "changeme" # Used to authenticate request using basic authentication
 vue_app_basicAuthPassword: "changeme" # Used to authenticate request using basic authentication
+seed_mail_username: "will-be-ignored-for-ip"
+seed_mail_password: "will-be-ignored-for-ip"
+traefik_host: "will-be-ignored-for-ip"
+api_host: "will-be-ignored-for-ip"
+ui_host: "will-be-ignored-for-ip"
+issuer_email: "will-be-ignored-for-ip"
 ```
 
 **Important Note:** **Do not store your account details in template file or any other file in git repository. If you

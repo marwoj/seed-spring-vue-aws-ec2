@@ -12,6 +12,7 @@ seed_mail_username: "changeme"
 seed_mail_password: "changeme"
 
 # Note: configuration below is required only if you own a domain and you want to configure reverse proxy
+# Put this values in a file for validation purposes, but they will be ignore for IP access.
 traefik_host: "traefik.changeme"      # format: "traefik.yourdomain.com"
 api_host: "api.changeme"              # format: "api.yourdomain.com"
 ui_host: "changeme"                   # format: "yourdomain.com"
