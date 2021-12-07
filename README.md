@@ -427,3 +427,16 @@ ERROR: could not find an available, non-overlapping IPv4 address pool among the 
 ```
 
 To make it work, just disconnect from VPN
+
+#### Tips
+
+To check BE dependencies, in seed-spring directory execute:
+```shell
+./gradlew dependencyUpdates
+```
+
+To check FE dependencies, in seed-vue directory execute:
+```shell
+npx npm-check-updates
+```
+

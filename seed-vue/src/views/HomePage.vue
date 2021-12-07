@@ -101,9 +101,9 @@ import HelloWorld from "@/components/HelloWorld.vue";
 import SeedRequest from "@/api/SeedRequest";
 
 export default {
-  name: "Home",
+  name: "HomePage",
   components: {
-    HelloWorld
+    HelloWorld,
   },
   data() {
     return {
@@ -112,8 +112,8 @@ export default {
       snackbar: {
         show: false,
         message: "",
-        color: ""
-      }
+        color: "",
+      },
     };
   },
   methods: {
@@ -131,7 +131,7 @@ export default {
       this.snackbar.message = message;
       this.snackbar.color = color;
       this.snackbar.show = "true";
-    }
+    },
   },
   created() {
     SeedRequest.getMessage()
@@ -144,6 +144,6 @@ export default {
           this.showError = true;
           this.showSnackbar("Request to API failed!", "warning");
         });
-  }
+  },
 };
 </script>
