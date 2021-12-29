@@ -60,7 +60,7 @@ class SeedControllerTest(
     fun `validates request`() {
         val payload: String = """
            {
-           "title":"Title",
+           "title":"Somte title",
            "body": "Hi",
            "to": "invalid-mail"
            }
@@ -82,7 +82,7 @@ class SeedControllerTest(
     fun `validates access when sending email`() {
         webClient.post().uri("/mail")
             .headers { head -> head.setBasicAuth("changeme", "wrong-pass") }
-            .bodyValue(HelloEmail(title = "Title", body = "Hi", to = "to@mail.com"))
+            .bodyValue(HelloEmail(title = "Some title", body = "Hi", to = "to@mail.com"))
             .exchange()
             .expectStatus().isUnauthorized
     }
